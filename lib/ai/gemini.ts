@@ -10,7 +10,7 @@ export class GeminiProvider implements AIProvider {
 
   async generate(systemPrompt: string, userPrompt: string): Promise<string> {
     const model = this.client.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash-lite",
       systemInstruction: systemPrompt,
     });
 
