@@ -12,7 +12,22 @@ export async function POST(req: NextRequest) {
     }
 
     const provider = getAIProvider();
-    const userPrompt = buildUserPrompt(body);
+
+    // 예방접종: 여러 발송 시점 지원
+    if (body.messageType === "vaccination" && body.reminderDaysList && body.reminderDaysList.length > 1) {
+      const results = await Promise.all(
+        body.reminderDaysList.map(async (days) => {
+          const prompt = buildUserPrompt({ ...body, reminderDays: days });
+          const message = await provider.generate(SYSTEM_PROMPT, prompt);
+          return { days, message };
+        })
+      );
+      return NextResponse.json({ messages: results });
+    }
+
+    // 단일 메시지 생성
+    const reminderDays = body.reminderDaysList?.[0] ?? body.reminderDays;
+    const userPrompt = buildUserPrompt({ ...body, reminderDays });
     const result = await provider.generate(SYSTEM_PROMPT, userPrompt);
 
     return NextResponse.json({ message: result });

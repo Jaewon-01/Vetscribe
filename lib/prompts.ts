@@ -42,7 +42,7 @@ export function buildUserPrompt(info: PatientInfo): string {
 - 발송 시점: D-${info.reminderDays}
 
 접종 리마인드 카카오톡 메시지를 작성해주세요.
-반드시 포함: 접종일 안내 / 당일 주의사항 (컨디션 체크 등) / 병원 연락처 안내 문구`;
+반드시 포함: 접종일 안내 / 당일 주의사항 (컨디션 체크 등) / 병원 연락처 안내 문구 (단, 실제 전화번호 대신 "병원으로 연락주세요" 라고만 작성)`;
 
     case "revisit":
       return `환자 정보:
