@@ -3,8 +3,14 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 
-interface ResultData {
+interface MultiMessage {
+  days: string;
   message: string;
+}
+
+interface ResultData {
+  message: string | null;
+  messages: MultiMessage[] | null;
   patientName: string;
   messageType: string;
 }
@@ -12,23 +18,33 @@ interface ResultData {
 function ResultContent() {
   const router = useRouter();
   const [data, setData] = useState<ResultData | null>(null);
-  const [edited, setEdited] = useState("");
+  const [activeTab, setActiveTab] = useState(0);
+  const [editedList, setEditedList] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   const [kakaoSim, setKakaoSim] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("vetscribe_result");
-    if (!raw) {
-      router.push("/");
-      return;
-    }
+    if (!raw) { router.push("/"); return; }
     const parsed: ResultData = JSON.parse(raw);
     setData(parsed);
-    setEdited(parsed.message);
+
+    if (parsed.messages) {
+      setEditedList(parsed.messages.map((m) => m.message));
+    } else {
+      setEditedList([parsed.message ?? ""]);
+    }
   }, [router]);
 
+  const isMulti = data?.messages && data.messages.length > 1;
+  const currentText = editedList[activeTab] ?? "";
+
+  const updateText = (val: string) => {
+    setEditedList((prev) => prev.map((t, i) => (i === activeTab ? val : t)));
+  };
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(edited);
+    await navigator.clipboard.writeText(currentText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -38,7 +54,9 @@ function ResultContent() {
     setTimeout(() => setKakaoSim(false), 3000);
   };
 
-  if (!data) return null;
+  const tabLabel = (days: string) => `D-${days} 발송용`;
+
+  if (!data || editedList.length === 0) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50">
@@ -55,29 +73,43 @@ function ResultContent() {
             </button>
             <h1 className="font-bold text-gray-900">안내문 미리보기</h1>
           </div>
-          <button
-            onClick={() => router.push("/")}
-            className="text-sm text-teal-600 font-medium hover:text-teal-700"
-          >
+          <button onClick={() => router.push("/")} className="text-sm text-teal-600 font-medium hover:text-teal-700">
             처음으로
           </button>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        {/* 탭 — 복수 메시지일 때만 */}
+        {isMulti && data.messages && (
+          <div className="flex gap-2">
+            {data.messages.map((m, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTab(i)}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  activeTab === i
+                    ? "bg-teal-500 text-white shadow-sm"
+                    : "bg-white border border-gray-200 text-gray-600 hover:border-teal-300"
+                }`}
+              >
+                {tabLabel(m.days)}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 카카오톡 미리보기 */}
         <div className="bg-[#B2C8E7] rounded-2xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 bg-[#FAE100] rounded-full flex items-center justify-center text-sm font-bold">
-              동
-            </div>
+            <div className="w-8 h-8 bg-[#FAE100] rounded-full flex items-center justify-center text-sm font-bold">동</div>
             <div>
               <p className="text-xs font-semibold text-gray-800">동물병원</p>
               <p className="text-[10px] text-gray-500">카카오톡 미리보기</p>
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm max-h-72 overflow-y-auto">
-            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{edited}</p>
+            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{currentText}</p>
           </div>
         </div>
 
@@ -85,11 +117,11 @@ function ResultContent() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">편집</h2>
-            <span className="text-xs text-gray-400">{edited.length}자</span>
+            <span className="text-xs text-gray-400">{currentText.length}자</span>
           </div>
           <textarea
-            value={edited}
-            onChange={(e) => setEdited(e.target.value)}
+            value={currentText}
+            onChange={(e) => updateText(e.target.value)}
             rows={12}
             className="w-full rounded-xl border border-gray-200 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent resize-none leading-relaxed"
           />
@@ -102,15 +134,9 @@ function ResultContent() {
             className="flex flex-col items-center justify-center gap-1.5 py-4 bg-white border border-gray-200 rounded-2xl hover:border-teal-300 hover:bg-teal-50 transition-all text-sm font-medium text-gray-700 shadow-sm"
           >
             {copied ? (
-              <>
-                <span className="text-xl">✅</span>
-                <span className="text-teal-600 text-xs">복사됨!</span>
-              </>
+              <><span className="text-xl">✅</span><span className="text-teal-600 text-xs">복사됨!</span></>
             ) : (
-              <>
-                <span className="text-xl">📋</span>
-                <span>복사</span>
-              </>
+              <><span className="text-xl">📋</span><span>복사</span></>
             )}
           </button>
 

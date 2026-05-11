@@ -16,7 +16,8 @@ export interface PatientInfo {
   // vaccination
   vaccineType?: string;
   vaccineDate?: string;
-  reminderDays?: string;
+  reminderDays?: string;       // single (used internally per prompt)
+  reminderDaysList?: string[]; // e.g. ["7", "1"]
   // surgery
   surgeryType?: string;
   medications?: string;
