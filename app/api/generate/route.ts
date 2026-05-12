@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAIProvider } from "@/lib/ai";
-import { SYSTEM_PROMPT, buildUserPrompt } from "@/lib/prompts";
-import type { PatientInfo } from "@/lib/ai/types";
+import { getSystemPrompt, buildUserPrompt } from "@/lib/prompts";
+import type { PatientInfo, Language } from "@/lib/ai/types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,24 +11,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "필수 정보가 누락되었습니다." }, { status: 400 });
     }
 
+    const language: Language = body.language ?? "ko";
     const provider = getAIProvider();
+    const systemPrompt = getSystemPrompt(language);
 
     // 예방접종: 여러 발송 시점 지원
     if (body.messageType === "vaccination" && body.reminderDaysList && body.reminderDaysList.length > 1) {
       const results = await Promise.all(
         body.reminderDaysList.map(async (days) => {
           const prompt = buildUserPrompt({ ...body, reminderDays: days });
-          const message = await provider.generate(SYSTEM_PROMPT, prompt);
+          const message = await provider.generate(systemPrompt, prompt);
           return { days, message };
         })
       );
       return NextResponse.json({ messages: results });
     }
 
-    // 단일 메시지 생성
     const reminderDays = body.reminderDaysList?.[0] ?? body.reminderDays;
     const userPrompt = buildUserPrompt({ ...body, reminderDays });
-    const result = await provider.generate(SYSTEM_PROMPT, userPrompt);
+    const result = await provider.generate(systemPrompt, userPrompt);
 
     return NextResponse.json({ message: result });
   } catch (err) {

@@ -8,11 +8,14 @@ export type MessageType =
   | "post-surgery"
   | "revisit";
 
+export type Language = "ko" | "en" | "zh";
+
 export interface PatientInfo {
   patientName: string;
   breed: string;
   age: string;
   messageType: MessageType;
+  language?: Language;
   // vaccination
   vaccineType?: string;
   vaccineDate?: string;
