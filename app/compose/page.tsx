@@ -2,7 +2,13 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense } from "react";
-import type { PatientInfo, MessageType } from "@/lib/ai/types";
+import type { PatientInfo, MessageType, Language } from "@/lib/ai/types";
+
+const LANGUAGES: { value: Language; label: string; flag: string }[] = [
+  { value: "ko", label: "한국어", flag: "🇰🇷" },
+  { value: "en", label: "English", flag: "🇺🇸" },
+  { value: "zh", label: "中文", flag: "🇨🇳" },
+];
 
 const TYPE_META: Record<MessageType, { title: string; icon: string; bg: string }> = {
   vaccination: { title: "예방접종 리마인드", icon: "💉", bg: "bg-emerald-500" },
@@ -44,7 +50,7 @@ function ComposeForm() {
   const messageType = (searchParams.get("type") ?? "post-surgery") as MessageType;
   const meta = TYPE_META[messageType] ?? TYPE_META["post-surgery"];
 
-  const [form, setForm] = useState<Partial<PatientInfo>>({ messageType, patientName: "", breed: "", age: "" });
+  const [form, setForm] = useState<Partial<PatientInfo>>({ messageType, patientName: "", breed: "", age: "", language: "ko" });
   const [reminderDaysList, setReminderDaysList] = useState<string[]>(["7"]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -109,6 +115,30 @@ function ComposeForm() {
 
       <main className="max-w-2xl mx-auto px-4 py-8">
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* 언어 선택 */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-gray-700">안내문 언어</span>
+              <div className="flex gap-2">
+                {LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.value}
+                    type="button"
+                    onClick={() => set("language", lang.value)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
+                      form.language === lang.value
+                        ? "bg-slate-900 text-white shadow-sm"
+                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                    }`}
+                  >
+                    <span>{lang.flag}</span>
+                    <span>{lang.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* 환자 기본 정보 */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
