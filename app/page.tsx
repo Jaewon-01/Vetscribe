@@ -7,7 +7,7 @@ const MESSAGE_TYPES = [
     Icon: Syringe,
     emoji: "💉",
     title: "예방접종 리마인드",
-    description: "D-7, D-1 맞춤 안내문 자동 생성",
+    description: "D-7, D-3, D-1 각각 맞춤 안내문 생성",
     accent: "#10b981",
     bg: "bg-emerald-500",
     lightBg: "bg-emerald-50",
