@@ -8,15 +8,22 @@ export type MessageType =
   | "post-surgery"
   | "revisit";
 
+export type Language = "ko" | "en" | "zh";
+export type Tone = "friendly" | "simple" | "custom";
+
 export interface PatientInfo {
   patientName: string;
   breed: string;
   age: string;
   messageType: MessageType;
+  language?: Language;
+  tone?: Tone;
+  customTone?: string;
   // vaccination
   vaccineType?: string;
   vaccineDate?: string;
-  reminderDays?: string;
+  reminderDays?: string;       // single (used internally per prompt)
+  reminderDaysList?: string[]; // e.g. ["7", "1"]
   // surgery
   surgeryType?: string;
   medications?: string;

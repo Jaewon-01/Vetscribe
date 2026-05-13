@@ -1,58 +1,88 @@
-import type { PatientInfo } from "./ai/types";
+import type { PatientInfo, Language, Tone } from "./ai/types";
 
-export const SYSTEM_PROMPT = `당신은 한국 동물병원 수의사를 보조하는 AI입니다.
-보호자에게 카카오톡으로 전송할 안내문을 작성합니다.
+const LANGUAGE_INSTRUCTIONS: Record<Language, string> = {
+  ko: "반드시 한국어로 작성하세요.",
+  en: "Write entirely in English.",
+  zh: "请用简体中文撰写。",
+};
 
-규칙:
-- 보호자가 이해하기 쉬운 쉬운 말 사용 (의학 용어 최소화)
-- 친절하고 따뜻한 어조, 이모지 적절히 사용
-- 카카오톡 줄바꿈 형식에 맞게 작성
-- 500자 이내로 간결하게
-- 불필요한 인사말 반복 없이 핵심 정보 위주로`;
+const TONE_INSTRUCTIONS: Record<Tone, string> = {
+  friendly: "친절하고 따뜻한 어조로, 이모지를 적절히 사용해서 작성하세요. (예: '안녕하세요 보호자님 🐶 ~해드릴게요~')",
+  simple: "이모지 없이 핵심 정보만 간결하게 작성하세요. (예: '[병원명] 가나디 예방접종 예약일: 11/20')",
+  custom: "", // filled dynamically
+};
+
+export function getSystemPrompt(language: Language = "ko", tone: Tone = "friendly", customTone?: string): string {
+  const toneInstruction = tone === "custom" && customTone
+    ? `다음 말투/스타일로 작성하세요: "${customTone}"`
+    : TONE_INSTRUCTIONS[tone];
+
+  return `You are an AI assistant helping veterinarians at a Korean animal hospital.
+Write an SMS text message to send to the pet owner.
+
+Rules:
+- Use simple, easy-to-understand language (minimize medical jargon)
+- Format for SMS line breaks
+- Keep it under 500 characters
+- No unnecessary repeated greetings — focus on key information
+- ${LANGUAGE_INSTRUCTIONS[language]}
+- ${toneInstruction}`;
+}
 
 export function buildUserPrompt(info: PatientInfo): string {
+  const lang = info.language ?? "ko";
+  const langSuffix: Record<Language, string> = {
+    ko: "한국어로 작성해주세요.",
+    en: "Please write in English.",
+    zh: "请用中文撰写。",
+  };
+
   switch (info.messageType) {
     case "post-surgery":
-      return `환자 정보:
-- 이름: ${info.patientName}
-- 품종/나이: ${info.breed} ${info.age}세
-- 수술 종류: ${info.surgeryType}
-- 처방약: ${info.medications}
-- 다음 내원일: ${info.nextVisit}
+      return `Patient info:
+- Name: ${info.patientName}
+- Breed/Age: ${info.breed}, ${info.age} years old
+- Surgery type: ${info.surgeryType}
+- Prescribed medications: ${info.medications}
+- Next visit date: ${info.nextVisit}
 
-위 정보를 바탕으로 보호자용 카카오톡 퇴원 안내문을 작성해주세요.
-반드시 포함: 약 복용법 / 주의사항 / 이런 경우 바로 내원(red flag) / 다음 내원일`;
+Write a discharge/post-surgery SMS notification for the pet owner.
+Must include: medication instructions / precautions / red flags (when to visit immediately) / next visit date.
+${langSuffix[lang]}`;
 
     case "pre-surgery":
-      return `환자 정보:
-- 이름: ${info.patientName}
-- 품종/나이: ${info.breed} ${info.age}세
-- 수술 종류: ${info.surgeryType}
-- 수술 예정일: ${info.nextVisit}
+      return `Patient info:
+- Name: ${info.patientName}
+- Breed/Age: ${info.breed}, ${info.age} years old
+- Surgery type: ${info.surgeryType}
+- Surgery date: ${info.nextVisit}
 
-위 정보를 바탕으로 보호자용 카카오톡 수술 전 안내문을 작성해주세요.
-반드시 포함: 금식 시간 / 당일 준비물 / 수술 전 주의사항 / 병원 연락 방법`;
+Write a pre-surgery SMS notification for the pet owner.
+Must include: fasting duration / items to bring / pre-surgery precautions / how to contact the clinic.
+${langSuffix[lang]}`;
 
     case "vaccination":
-      return `환자 정보:
-- 이름: ${info.patientName}
-- 품종/나이: ${info.breed} ${info.age}세
-- 접종 종류: ${info.vaccineType}
-- 접종 예정일: ${info.vaccineDate}
-- 발송 시점: D-${info.reminderDays}
+      return `Patient info:
+- Name: ${info.patientName}
+- Breed/Age: ${info.breed}, ${info.age} years old
+- Vaccine type: ${info.vaccineType}
+- Scheduled date: ${info.vaccineDate}
+- Reminder timing: D-${info.reminderDays} before appointment
 
-접종 리마인드 카카오톡 메시지를 작성해주세요.
-반드시 포함: 접종일 안내 / 당일 주의사항 (컨디션 체크 등) / 병원 연락처 안내 문구`;
+Write a vaccination reminder SMS message for the pet owner.
+Must include: appointment date reminder / day-of precautions / contact clinic instruction (do NOT include real phone numbers).
+${langSuffix[lang]}`;
 
     case "revisit":
-      return `환자 정보:
-- 이름: ${info.patientName}
-- 품종/나이: ${info.breed} ${info.age}세
-- 재내원 예정일: ${info.revisitDate}
-- 내원 사유: ${info.revisitReason}
+      return `Patient info:
+- Name: ${info.patientName}
+- Breed/Age: ${info.breed}, ${info.age} years old
+- Revisit date: ${info.revisitDate}
+- Reason: ${info.revisitReason}
 
-재내원 리마인드 카카오톡 메시지를 작성해주세요.
-반드시 포함: 내원일 및 사유 안내 / 준비사항 (있다면) / 문의 연락처 안내 문구`;
+Write a revisit reminder SMS message for the pet owner.
+Must include: visit date and reason / preparation if any / contact clinic instruction.
+${langSuffix[lang]}`;
 
     default:
       throw new Error("Unknown message type");
