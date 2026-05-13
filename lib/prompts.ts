@@ -1,26 +1,36 @@
-import type { PatientInfo, Language } from "./ai/types";
+import type { PatientInfo, Language, Tone } from "./ai/types";
 
 const LANGUAGE_INSTRUCTIONS: Record<Language, string> = {
-  ko: "반드시 한국어로 작성하세요. 친절하고 따뜻한 어조, 이모지 적절히 사용.",
-  en: "Write entirely in English. Use a warm and friendly tone with appropriate emojis. Keep it concise and clear for non-Korean speakers.",
-  zh: "请用简体中文撰写。语气友好温暖，适当使用表情符号。内容简洁清晰。",
+  ko: "반드시 한국어로 작성하세요.",
+  en: "Write entirely in English.",
+  zh: "请用简体中文撰写。",
 };
 
-export function getSystemPrompt(language: Language = "ko"): string {
+const TONE_INSTRUCTIONS: Record<Tone, string> = {
+  friendly: "친절하고 따뜻한 어조로, 이모지를 적절히 사용해서 작성하세요. (예: '안녕하세요 보호자님 🐶 ~해드릴게요~')",
+  simple: "이모지 없이 핵심 정보만 간결하게 작성하세요. (예: '[병원명] 가나디 예방접종 예약일: 11/20')",
+  custom: "",
+};
+
+export function getSystemPrompt(language: Language = "ko", tone: Tone = "friendly", customTone?: string): string {
+  const toneInstruction = tone === "custom" && customTone
+    ? `다음 말투/스타일로 작성하세요: "${customTone}"`
+    : TONE_INSTRUCTIONS[tone];
+
   return `You are an AI assistant helping veterinarians at a Korean animal hospital.
-Write a messaging app (KakaoTalk) notification message to send to the pet owner.
+Write an SMS text message to send to the pet owner.
 
 Rules:
 - Use simple, easy-to-understand language (minimize medical jargon)
-- Format for messaging app line breaks
+- Format for SMS line breaks
 - Keep it under 500 characters
 - No unnecessary repeated greetings — focus on key information
-- ${LANGUAGE_INSTRUCTIONS[language]}`;
+- ${LANGUAGE_INSTRUCTIONS[language]}
+- ${toneInstruction}`;
 }
 
 export function buildUserPrompt(info: PatientInfo): string {
   const lang = info.language ?? "ko";
-
   const langSuffix: Record<Language, string> = {
     ko: "한국어로 작성해주세요.",
     en: "Please write in English.",
@@ -36,7 +46,7 @@ export function buildUserPrompt(info: PatientInfo): string {
 - Prescribed medications: ${info.medications}
 - Next visit date: ${info.nextVisit}
 
-Write a discharge/post-surgery KakaoTalk notification for the pet owner.
+Write a discharge/post-surgery SMS notification for the pet owner.
 Must include: medication instructions / precautions / red flags (when to visit immediately) / next visit date.
 ${langSuffix[lang]}`;
 
@@ -47,7 +57,7 @@ ${langSuffix[lang]}`;
 - Surgery type: ${info.surgeryType}
 - Surgery date: ${info.nextVisit}
 
-Write a pre-surgery KakaoTalk notification for the pet owner.
+Write a pre-surgery SMS notification for the pet owner.
 Must include: fasting duration / items to bring / pre-surgery precautions / how to contact the clinic.
 ${langSuffix[lang]}`;
 
@@ -59,8 +69,8 @@ ${langSuffix[lang]}`;
 - Scheduled date: ${info.vaccineDate}
 - Reminder timing: D-${info.reminderDays} before appointment
 
-Write a vaccination reminder KakaoTalk message for the pet owner.
-Must include: appointment date reminder / day-of precautions (check condition etc.) / contact clinic instruction (do NOT include real phone numbers).
+Write a vaccination reminder SMS message for the pet owner.
+Must include: appointment date reminder / day-of precautions / contact clinic instruction (do NOT include real phone numbers).
 ${langSuffix[lang]}`;
 
     case "revisit":
@@ -70,7 +80,7 @@ ${langSuffix[lang]}`;
 - Revisit date: ${info.revisitDate}
 - Reason: ${info.revisitReason}
 
-Write a revisit reminder KakaoTalk message for the pet owner.
+Write a revisit reminder SMS message for the pet owner.
 Must include: visit date and reason / preparation if any / contact clinic instruction.
 ${langSuffix[lang]}`;
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAIProvider } from "@/lib/ai";
 import { getSystemPrompt, buildUserPrompt } from "@/lib/prompts";
-import type { PatientInfo, Language } from "@/lib/ai/types";
+import type { PatientInfo, Language, Tone } from "@/lib/ai/types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,10 +12,10 @@ export async function POST(req: NextRequest) {
     }
 
     const language: Language = body.language ?? "ko";
+    const tone: Tone = body.tone ?? "friendly";
     const provider = getAIProvider();
-    const systemPrompt = getSystemPrompt(language);
+    const systemPrompt = getSystemPrompt(language, tone, body.customTone);
 
-    // 예방접종: 여러 발송 시점 지원
     if (body.messageType === "vaccination" && body.reminderDaysList && body.reminderDaysList.length > 1) {
       const results = await Promise.all(
         body.reminderDaysList.map(async (days) => {
