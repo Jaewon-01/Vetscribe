@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: result });
   } catch (err) {
-    console.error("Generate error:", err);
-    return NextResponse.json({ error: "안내문 생성 중 오류가 발생했습니다." }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Generate error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
