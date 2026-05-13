@@ -9,6 +9,7 @@ export type MessageType =
   | "revisit";
 
 export type Language = "ko" | "en" | "zh";
+export type Tone = "friendly" | "simple" | "custom";
 
 export interface PatientInfo {
   patientName: string;
@@ -16,11 +17,13 @@ export interface PatientInfo {
   age: string;
   messageType: MessageType;
   language?: Language;
+  tone?: Tone;
+  customTone?: string;
   // vaccination
   vaccineType?: string;
   vaccineDate?: string;
-  reminderDays?: string;       // single (used internally per prompt)
-  reminderDaysList?: string[]; // e.g. ["7", "1"]
+  reminderDays?: string;
+  reminderDaysList?: string[];
   // surgery
   surgeryType?: string;
   medications?: string;
