@@ -1,9 +1,9 @@
 import type { PatientInfo, Language, Tone } from "./ai/types";
 
 const LANGUAGE_INSTRUCTIONS: Record<Language, string> = {
-  ko: "반드시 한국어로 작성하세요.",
-  en: "Write entirely in English.",
-  zh: "请用简体中文撰写。",
+  ko: "IMPORTANT: You MUST write the entire SMS message in Korean (한국어). Do not use any other language.",
+  en: "IMPORTANT: You MUST write the entire SMS message in English only. Do NOT use Korean or any other language, even if patient names are in Korean.",
+  zh: "IMPORTANT: You MUST write the entire SMS message in Simplified Chinese (简体中文) only. Do NOT use Korean or any other language.",
 };
 
 const TONE_INSTRUCTIONS: Record<Tone, string> = {
@@ -32,9 +32,9 @@ Rules:
 export function buildUserPrompt(info: PatientInfo): string {
   const lang = info.language ?? "ko";
   const langSuffix: Record<Language, string> = {
-    ko: "한국어로 작성해주세요.",
-    en: "Please write in English.",
-    zh: "请用中文撰写。",
+    ko: "⚠️ 반드시 한국어로만 작성하세요.",
+    en: "⚠️ WRITE IN ENGLISH ONLY. The final SMS must be entirely in English.",
+    zh: "⚠️ 必须只用简体中文写。最终短信必须完全是中文。",
   };
 
   switch (info.messageType) {
