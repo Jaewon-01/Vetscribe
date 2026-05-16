@@ -1,9 +1,9 @@
 import type { PatientInfo, Language, Tone } from "./ai/types";
 
 const LANGUAGE_INSTRUCTIONS: Record<Language, string> = {
-  ko: "IMPORTANT: You MUST write the entire SMS message in Korean (한국어). Do not use any other language.",
-  en: "IMPORTANT: You MUST write the entire SMS message in English only. Do NOT use Korean or any other language, even if patient names are in Korean.",
-  zh: "IMPORTANT: You MUST write the entire SMS message in Simplified Chinese (简体中文) only. Do NOT use Korean or any other language.",
+  ko: "You MUST write the entire SMS message in Korean (한국어) only.",
+  en: "CRITICAL: You MUST write the ENTIRE SMS message in ENGLISH ONLY. Even though the patient data contains Korean names and words, your response must be 100% English. Do NOT write even a single Korean character (한글). Translate all information into English.",
+  zh: "CRITICAL: You MUST write the ENTIRE SMS message in SIMPLIFIED CHINESE (简体中文) ONLY. Even though the patient data contains Korean names and words, your response must be 100% Chinese. Do NOT write even a single Korean character (한글). Translate all information into Chinese.",
 };
 
 const TONE_INSTRUCTIONS: Record<Tone, string> = {
@@ -20,26 +20,38 @@ export function getSystemPrompt(language: Language = "ko", tone: Tone = "friendl
   return `You are an AI assistant helping veterinarians at a Korean animal hospital.
 Write an SMS text message to send to the pet owner.
 
+LANGUAGE RULE (HIGHEST PRIORITY): ${LANGUAGE_INSTRUCTIONS[language]}
+
 Rules:
 - Use simple, easy-to-understand language (minimize medical jargon)
 - Format for SMS line breaks
 - Keep it under 500 characters
 - No unnecessary repeated greetings — focus on key information
-- ${LANGUAGE_INSTRUCTIONS[language]}
 - ${toneInstruction}`;
 }
 
+const LANG_PREFIX: Record<Language, string> = {
+  ko: "⚠️ 전체 SMS를 한국어로만 작성하세요.",
+  en: "⚠️ LANGUAGE = ENGLISH ONLY. Your entire response must be in English. No Korean whatsoever.",
+  zh: "⚠️ 语言 = 仅限简体中文。你的整个回复必须是中文。绝对不能有韩文。",
+};
+
+const LANG_SUFFIX: Record<Language, string> = {
+  ko: "반드시 한국어로만 작성하세요.",
+  en: "FINAL REMINDER: Write 100% in English. Zero Korean characters allowed.",
+  zh: "最终提醒：100%用中文写。不允许任何韩文字符。",
+};
+
 export function buildUserPrompt(info: PatientInfo): string {
   const lang = info.language ?? "ko";
-  const langSuffix: Record<Language, string> = {
-    ko: "⚠️ 반드시 한국어로만 작성하세요.",
-    en: "⚠️ WRITE IN ENGLISH ONLY. The final SMS must be entirely in English.",
-    zh: "⚠️ 必须只用简体中文写。最终短信必须完全是中文。",
-  };
+  const prefix = LANG_PREFIX[lang];
+  const suffix = LANG_SUFFIX[lang];
 
   switch (info.messageType) {
     case "post-surgery":
-      return `Patient info:
+      return `${prefix}
+
+Patient info:
 - Name: ${info.patientName}
 - Breed/Age: ${info.breed}, ${info.age} years old
 - Surgery type: ${info.surgeryType}
@@ -48,10 +60,13 @@ export function buildUserPrompt(info: PatientInfo): string {
 
 Write a discharge/post-surgery SMS notification for the pet owner.
 Must include: medication instructions / precautions / red flags (when to visit immediately) / next visit date.
-${langSuffix[lang]}`;
+
+${suffix}`;
 
     case "pre-surgery":
-      return `Patient info:
+      return `${prefix}
+
+Patient info:
 - Name: ${info.patientName}
 - Breed/Age: ${info.breed}, ${info.age} years old
 - Surgery type: ${info.surgeryType}
@@ -59,10 +74,13 @@ ${langSuffix[lang]}`;
 
 Write a pre-surgery SMS notification for the pet owner.
 Must include: fasting duration / items to bring / pre-surgery precautions / how to contact the clinic.
-${langSuffix[lang]}`;
+
+${suffix}`;
 
     case "vaccination":
-      return `Patient info:
+      return `${prefix}
+
+Patient info:
 - Name: ${info.patientName}
 - Breed/Age: ${info.breed}, ${info.age} years old
 - Vaccine type: ${info.vaccineType}
@@ -71,10 +89,13 @@ ${langSuffix[lang]}`;
 
 Write a vaccination reminder SMS message for the pet owner.
 Must include: appointment date reminder / day-of precautions / contact clinic instruction (do NOT include real phone numbers).
-${langSuffix[lang]}`;
+
+${suffix}`;
 
     case "revisit":
-      return `Patient info:
+      return `${prefix}
+
+Patient info:
 - Name: ${info.patientName}
 - Breed/Age: ${info.breed}, ${info.age} years old
 - Revisit date: ${info.revisitDate}
@@ -82,7 +103,8 @@ ${langSuffix[lang]}`;
 
 Write a revisit reminder SMS message for the pet owner.
 Must include: visit date and reason / preparation if any / contact clinic instruction.
-${langSuffix[lang]}`;
+
+${suffix}`;
 
     default:
       throw new Error("Unknown message type");
