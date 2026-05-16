@@ -2,8 +2,18 @@ import type { PatientInfo, Language, Tone } from "./ai/types";
 
 const LANGUAGE_INSTRUCTIONS: Record<Language, string> = {
   ko: "You MUST write the entire SMS message in Korean (한국어) only.",
-  en: "CRITICAL: You MUST write the ENTIRE SMS message in ENGLISH ONLY. Even though the patient data contains Korean names and words, your response must be 100% English. Do NOT write even a single Korean character (한글). Translate all information into English.",
-  zh: "CRITICAL: You MUST write the ENTIRE SMS message in SIMPLIFIED CHINESE (简体中文) ONLY. Even though the patient data contains Korean names and words, your response must be 100% Chinese. Do NOT write even a single Korean character (한글). Translate all information into Chinese.",
+  en: `CRITICAL LANGUAGE RULE — ENGLISH ONLY:
+- Write 100% in English. Not a single Korean character (한글) is allowed.
+- Pet names and owner names are proper nouns — keep their spelling but write ALL surrounding text in English.
+- Do NOT use Korean greetings like '안녕하세요', '보호자님', '감사합니다'.
+- Correct English greeting example: "Hello, [PetName]'s owner!"
+- Wrong: "보리 보호자님, 안녕하세요" ← this is forbidden.`,
+  zh: `CRITICAL LANGUAGE RULE — SIMPLIFIED CHINESE (简体中文) ONLY:
+- Write 100% in Simplified Chinese. Not a single Korean character (한글) is allowed.
+- Pet names and owner names are proper nouns — keep their spelling but write ALL surrounding text in Chinese.
+- Do NOT use Korean greetings like '안녕하세요', '보호자님', '감사합니다'.
+- Correct Chinese greeting example: "[PetName] 的主人您好！"
+- Wrong: "보리 보호자님, 안녕하세요" ← this is strictly forbidden.`,
 };
 
 const TONE_INSTRUCTIONS: Record<Tone, string> = {
@@ -20,7 +30,8 @@ export function getSystemPrompt(language: Language = "ko", tone: Tone = "friendl
   return `You are an AI assistant helping veterinarians at a Korean animal hospital.
 Write an SMS text message to send to the pet owner.
 
-LANGUAGE RULE (HIGHEST PRIORITY): ${LANGUAGE_INSTRUCTIONS[language]}
+LANGUAGE RULE (HIGHEST PRIORITY — OVERRIDE EVERYTHING ELSE):
+${LANGUAGE_INSTRUCTIONS[language]}
 
 Rules:
 - Use simple, easy-to-understand language (minimize medical jargon)
@@ -32,14 +43,14 @@ Rules:
 
 const LANG_PREFIX: Record<Language, string> = {
   ko: "⚠️ 전체 SMS를 한국어로만 작성하세요.",
-  en: "⚠️ LANGUAGE = ENGLISH ONLY. Your entire response must be in English. No Korean whatsoever.",
-  zh: "⚠️ 语言 = 仅限简体中文。你的整个回复必须是中文。绝对不能有韩文。",
+  en: "⚠️ ENGLISH ONLY — No Korean characters at all. Greetings must also be in English (e.g. 'Hello, Bori's owner!').",
+  zh: "⚠️ 仅限简体中文 — 不允许任何韩文字符。问候语也必须用中文（例如：'보리 的主人您好！'）。",
 };
 
 const LANG_SUFFIX: Record<Language, string> = {
   ko: "반드시 한국어로만 작성하세요.",
-  en: "FINAL REMINDER: Write 100% in English. Zero Korean characters allowed.",
-  zh: "最终提醒：100%用中文写。不允许任何韩文字符。",
+  en: "FINAL CHECK: Is every single word in English? If not, rewrite. Zero Korean characters allowed.",
+  zh: "最终检查：每个字都是中文吗？如果不是，请重写。不允许任何韩文字符。",
 };
 
 export function buildUserPrompt(info: PatientInfo): string {
@@ -52,7 +63,7 @@ export function buildUserPrompt(info: PatientInfo): string {
       return `${prefix}
 
 Patient info:
-- Name: ${info.patientName}
+- Pet name: ${info.patientName}
 - Breed/Age: ${info.breed}, ${info.age} years old
 - Surgery type: ${info.surgeryType}
 - Prescribed medications: ${info.medications}
@@ -67,7 +78,7 @@ ${suffix}`;
       return `${prefix}
 
 Patient info:
-- Name: ${info.patientName}
+- Pet name: ${info.patientName}
 - Breed/Age: ${info.breed}, ${info.age} years old
 - Surgery type: ${info.surgeryType}
 - Surgery date: ${info.nextVisit}
@@ -81,7 +92,7 @@ ${suffix}`;
       return `${prefix}
 
 Patient info:
-- Name: ${info.patientName}
+- Pet name: ${info.patientName}
 - Breed/Age: ${info.breed}, ${info.age} years old
 - Vaccine type: ${info.vaccineType}
 - Scheduled date: ${info.vaccineDate}
@@ -96,7 +107,7 @@ ${suffix}`;
       return `${prefix}
 
 Patient info:
-- Name: ${info.patientName}
+- Pet name: ${info.patientName}
 - Breed/Age: ${info.breed}, ${info.age} years old
 - Revisit date: ${info.revisitDate}
 - Reason: ${info.revisitReason}
