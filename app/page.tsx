@@ -36,11 +36,25 @@ function getPatientDate(p: MockPatient): string | undefined {
   return p.vaccineDate ?? p.nextVisit ?? p.revisitDate;
 }
 
+function highlightMatch(text: string, query: string) {
+  if (!query) return <span>{text}</span>;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <span>{text}</span>;
+  return (
+    <span>
+      {text.slice(0, idx)}
+      <mark className="bg-yellow-200 text-gray-900 rounded px-0.5">{text.slice(idx, idx + query.length)}</mark>
+      {text.slice(idx + query.length)}
+    </span>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [patients, setPatients] = useState<MockPatient[]>(MOCK_PATIENTS);
   const [typeFilter, setTypeFilter] = useState<MessageType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<SendStatus | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const today = new Date();
   const dateLabel = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
@@ -51,6 +65,10 @@ export default function DashboardPage() {
   const filtered = patients.filter((p) => {
     if (typeFilter !== "all" && p.messageType !== typeFilter) return false;
     if (statusFilter !== "all" && p.status !== statusFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      if (!p.petName.toLowerCase().includes(q) && !p.ownerName.toLowerCase().includes(q)) return false;
+    }
     return true;
   });
 
@@ -125,6 +143,26 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="반려동물 이름 또는 보호자 이름 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent shadow-sm"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors">
+              <svg className="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-wrap gap-2">
           <div className="flex items-center gap-1.5 bg-white border border-gray-100 rounded-xl p-1 shadow-sm">
             {(["all", "vaccination", "pre-surgery", "post-surgery", "revisit"] as const).map((t) => (
@@ -146,8 +184,15 @@ export default function DashboardPage() {
 
         <div className="space-y-2">
           {filtered.length === 0 && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400 text-sm">
-              해당하는 환자가 없습니다.
+            <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center space-y-2">
+              <p className="text-gray-400 text-sm">
+                {searchQuery ? `"${searchQuery}"에 해당하는 환자가 없습니다.` : "해당하는 환자가 없습니다."}
+              </p>
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="text-xs text-teal-600 font-semibold hover:underline">
+                  검색어 지우기
+                </button>
+              )}
             </div>
           )}
           {filtered.map((p) => {
@@ -160,9 +205,9 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-gray-900 text-sm">{p.ownerName} 보호자</span>
+                    <span className="font-bold text-gray-900 text-sm">{highlightMatch(p.ownerName, searchQuery)} 보호자</span>
                     <span className="text-gray-400 text-xs">·</span>
-                    <span className="text-gray-700 text-sm">{p.petName}</span>
+                    <span className="text-gray-700 text-sm">{highlightMatch(p.petName, searchQuery)}</span>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${meta.bg} ${meta.color}`}>{meta.label}</span>
                   </div>
                   <div className="text-xs text-gray-400 mt-0.5">
