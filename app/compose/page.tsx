@@ -160,7 +160,7 @@ function ComposeForm() {
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-50">
-              <h2 className="font-bold text-gray-900 text-sm">환자 기본 정보</h2>
+              <h2 className="font-bold text-gray-900 text-sm">반려동물 기본 정보</h2>
             </div>
             <div className="p-6 grid grid-cols-3 gap-4">
               <div className="col-span-3 sm:col-span-1">
