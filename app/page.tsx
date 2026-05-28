@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const dateLabel = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
   const pending = patients.filter((p) => p.status === "pending").length;
   const sent = patients.filter((p) => p.status === "sent").length;
+  const todayUrgent = patients.filter((p) => p.dDay <= 0 && p.status === "pending").length;
 
   const filtered = patients.filter((p) => {
     if (typeFilter !== "all" && p.messageType !== typeFilter) return false;
@@ -96,24 +97,31 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-black text-gray-900">오늘의 발송 대시보드</h1>
-            <p className="text-sm text-gray-400 mt-0.5">{dateLabel}</p>
+        <div>
+          <h1 className="text-xl font-black text-gray-900">오늘의 발송 대시보드</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{dateLabel} · 반려동물 보호자 SMS 자동화</p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-white border border-orange-100 rounded-2xl p-4 shadow-sm">
+            <div className="text-2xl font-black text-orange-500">{pending}</div>
+            <div className="text-xs text-gray-500 mt-0.5 font-medium">발송 대기</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">미발송 건수</div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="bg-white border border-gray-100 rounded-xl px-4 py-2 text-center shadow-sm">
-              <div className="text-lg font-black text-orange-500">{pending}</div>
-              <div className="text-xs text-gray-500">미발송</div>
-            </div>
-            <div className="bg-white border border-gray-100 rounded-xl px-4 py-2 text-center shadow-sm">
-              <div className="text-lg font-black text-emerald-600">{sent}</div>
-              <div className="text-xs text-gray-500">발송완료</div>
-            </div>
-            <div className="bg-white border border-gray-100 rounded-xl px-4 py-2 text-center shadow-sm">
-              <div className="text-lg font-black text-gray-900">{patients.length}</div>
-              <div className="text-xs text-gray-500">전체</div>
-            </div>
+          <div className={`rounded-2xl p-4 shadow-sm border ${todayUrgent > 0 ? "bg-red-50 border-red-200" : "bg-white border-gray-100"}`}>
+            <div className={`text-2xl font-black ${todayUrgent > 0 ? "text-red-600" : "text-gray-400"}`}>{todayUrgent}</div>
+            <div className="text-xs text-gray-500 mt-0.5 font-medium">오늘 마감</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">즉시 발송 필요</div>
+          </div>
+          <div className="bg-white border border-emerald-100 rounded-2xl p-4 shadow-sm">
+            <div className="text-2xl font-black text-emerald-600">{sent}</div>
+            <div className="text-xs text-gray-500 mt-0.5 font-medium">발송 완료</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">이번 주 누적</div>
+          </div>
+          <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+            <div className="text-2xl font-black text-slate-700">{patients.length}</div>
+            <div className="text-xs text-gray-500 mt-0.5 font-medium">전체 반려동물</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">등록 환자 수</div>
           </div>
         </div>
 

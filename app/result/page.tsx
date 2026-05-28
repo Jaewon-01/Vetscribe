@@ -19,6 +19,16 @@ function ResultContent() {
   const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState(false);
+  const [checklist, setChecklist] = useState([false, false, false, false]);
+
+  const CHECKLIST_ITEMS = [
+    "반려동물 이름 및 품종이 정확한지 확인했습니다",
+    "날짜 및 방문 일정이 올바른지 확인했습니다",
+    "약물명·주의사항 등 의료 정보가 정확한지 확인했습니다",
+    "전체 내용을 검토하여 이상이 없음을 확인했습니다",
+  ];
+  const allChecked = checklist.every(Boolean);
+  const toggleCheck = (i: number) => setChecklist((prev) => prev.map((v, idx) => idx === i ? !v : v));
 
   useEffect(() => {
     const raw = sessionStorage.getItem("vetscribe_result");
@@ -119,8 +129,8 @@ function ResultContent() {
             className="flex flex-col items-center justify-center gap-1.5 py-4 bg-white border border-gray-200 rounded-2xl hover:border-teal-300 hover:bg-teal-50 transition-all text-sm font-medium text-gray-700 shadow-sm">
             {copied ? <><span className="text-xl">✅</span><span className="text-teal-600 text-xs">복사됨!</span></> : <><span className="text-xl">📋</span><span>복사하기</span></>}
           </button>
-          <button onClick={handleSend} disabled={sending}
-            className="flex flex-col items-center justify-center gap-1.5 py-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 rounded-2xl transition-all text-sm font-bold text-white shadow-sm">
+          <button onClick={handleSend} disabled={sending || !allChecked}
+            className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl transition-all text-sm font-bold text-white shadow-sm ${allChecked ? "bg-slate-900 hover:bg-slate-800" : "bg-gray-300 cursor-not-allowed"} disabled:opacity-60`}>
             {sending ? (
               <><svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg><span className="text-xs">발송 중...</span></>
             ) : (
@@ -133,8 +143,27 @@ function ResultContent() {
           </button>
         </div>
 
-        <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
-          <p className="text-xs text-amber-700">⚠️ AI가 생성한 안내문은 수의사가 반드시 확인 후 발송하세요. 의학적 판단은 수의사에게 있습니다.</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900 text-sm">발송 전 수의사 확인 체크리스트</h2>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${allChecked ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-600"}`}>
+              {checklist.filter(Boolean).length}/{CHECKLIST_ITEMS.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {CHECKLIST_ITEMS.map((item, i) => (
+              <button key={i} type="button" onClick={() => toggleCheck(i)}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${checklist[i] ? "bg-emerald-50 border border-emerald-200" : "bg-gray-50 border border-gray-200 hover:border-gray-300"}`}>
+                <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${checklist[i] ? "bg-emerald-500" : "bg-white border-2 border-gray-300"}`}>
+                  {checklist[i] && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                </div>
+                <span className={`text-xs font-medium ${checklist[i] ? "text-emerald-700 line-through decoration-emerald-400" : "text-gray-600"}`}>{item}</span>
+              </button>
+            ))}
+          </div>
+          {!allChecked && (
+            <p className="text-xs text-amber-600 font-medium">⚠️ 모든 항목을 확인해야 문자 발송이 가능합니다. AI 생성 내용은 수의사가 검토 후 발송하세요.</p>
+          )}
         </div>
       </main>
     </div>
