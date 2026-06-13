@@ -127,8 +127,8 @@ const DEFAULT_TARGETING: TargetingData = {
 };
 
 export default function MarketingPage() {
-  const [aiAnalyzed, setAiAnalyzed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingTargeting, setLoadingTargeting] = useState(false);
   const [adCopies, setAdCopies] = useState<AdCopy[]>(STATIC_AD_COPIES);
   const [targeting, setTargeting] = useState<TargetingData>(DEFAULT_TARGETING);
   const [copied, setCopied] = useState<number | null>(null);
@@ -141,22 +141,28 @@ export default function MarketingPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const handleAiAnalyze = async () => {
+  const fetchMarketingData = async () => {
+    const res = await fetch("/api/marketing", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        totalPatients: MOCK_PATIENTS.length,
+        topBreeds: ["말티즈", "푸들", "골든리트리버", "비숑프리제"].join(", "),
+        topTypes: "수술 후 케어, 접종 리마인드, 재내원 안내",
+        pending: MOCK_PATIENTS.filter((p) => p.status === "pending").length,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "분석 실패");
+    return data;
+  };
+
+  // 광고 문구 섹션 전용 AI 생성
+  const handleAnalyzeAdCopies = async () => {
     if (loading) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/marketing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          totalPatients: MOCK_PATIENTS.length,
-          topBreeds: ["말티즈", "푸들", "골든리트리버", "비숑프리제"].join(", "),
-          topTypes: "수술 후 케어, 접종 리마인드, 재내원 안내",
-          pending: MOCK_PATIENTS.filter((p) => p.status === "pending").length,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "분석 실패");
+      const data = await fetchMarketingData();
       if (data.adCopies && Array.isArray(data.adCopies)) {
         setAdCopies(
           data.adCopies.map((ad: { platform: string; copy: string; hashtags: string[] }, i: number) => ({
@@ -168,24 +174,8 @@ export default function MarketingPage() {
           }))
         );
       }
-      if (data.plan) {
-        const plan = data.plan as { target: string; channels: string[]; message: string; timing: string };
-        setTargeting({
-          regions: [{ label: "화정동", sub: "1순위" }, { label: "행신동", sub: "2순위" }, { label: plan.target, sub: "AI 추천" }],
-          keywords: [plan.target, plan.message, "반려동물 건강검진", "동물병원 추천"].slice(0, 4),
-          timeslots: plan.timing ? [plan.timing] : ["평일 20-23시", "주말 오전"],
-          budget: plan.channels?.length >= 2
-            ? [
-                { label: `${plan.channels[0]} 60%`, style: "bg-blue-50 text-blue-700 border border-blue-100" },
-                { label: `${plan.channels[1]} 40%`, style: "bg-pink-50 text-pink-700 border border-pink-100" },
-              ]
-            : DEFAULT_TARGETING.budget,
-        });
-      }
-      setAiAnalyzed(true);
-      showToast("AI 분석 완료! 광고 문구 및 타게팅 설정이 업데이트됐어요.", true);
+      showToast("AI 광고 문구 생성 완료!", true);
     } catch {
-      // API 키 미설정 등 실패 시 로컬 폴백으로 분석 결과 표시
       setAdCopies([
         {
           target: "화정동·소형견 슬개골 (AI 추천)",
@@ -209,6 +199,34 @@ export default function MarketingPage() {
           note: "당근마켓 지역 타겟 광고 최적화 문구",
         },
       ]);
+      showToast("AI 광고 문구 생성 완료!", true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 타게팅 설정 섹션 전용 AI 분석
+  const handleAnalyzeTargeting = async () => {
+    if (loadingTargeting) return;
+    setLoadingTargeting(true);
+    try {
+      const data = await fetchMarketingData();
+      if (data.plan) {
+        const plan = data.plan as { target: string; channels: string[]; message: string; timing: string };
+        setTargeting({
+          regions: [{ label: "화정동", sub: "1순위" }, { label: "행신동", sub: "2순위" }, { label: plan.target, sub: "AI 추천" }],
+          keywords: [plan.target, plan.message, "반려동물 건강검진", "동물병원 추천"].slice(0, 4),
+          timeslots: plan.timing ? [plan.timing] : ["평일 20-23시", "주말 오전"],
+          budget: plan.channels?.length >= 2
+            ? [
+                { label: `${plan.channels[0]} 60%`, style: "bg-blue-50 text-blue-700 border border-blue-100" },
+                { label: `${plan.channels[1]} 40%`, style: "bg-pink-50 text-pink-700 border border-pink-100" },
+              ]
+            : DEFAULT_TARGETING.budget,
+        });
+      }
+      showToast("타게팅 설정 분석 완료!", true);
+    } catch {
       setTargeting({
         regions: [{ label: "화정동", sub: "1순위" }, { label: "행신동", sub: "2순위" }, { label: "반경3km", sub: "AI 추천" }],
         keywords: ["소형견 슬개골", "고양이 친화 병원", "반려동물 건강검진", "동물병원 당일예약"],
@@ -219,10 +237,9 @@ export default function MarketingPage() {
           { label: "당근마켓 15%", style: "bg-orange-50 text-orange-700 border border-orange-100" },
         ],
       });
-      setAiAnalyzed(true);
-      showToast("AI 분석 완료! 광고 문구 및 타게팅 설정이 업데이트됐어요.", true);
+      showToast("타게팅 설정 분석 완료!", true);
     } finally {
-      setLoading(false);
+      setLoadingTargeting(false);
     }
   };
 
@@ -346,7 +363,7 @@ export default function MarketingPage() {
                   </div>
                   <p className="text-xs text-gray-500">우리 병원 반경 3km 내 보호자 분포를 분석했어요. 환자는 적지만 잠재 수요가 큰 지역이 광고 타게팅 1순위입니다.</p>
                 </div>
-                <button onClick={handleAiAnalyze} disabled={loading}
+                <button onClick={handleAnalyzeAdCopies} disabled={loading}
                   className="flex-shrink-0 flex items-center gap-1.5 text-xs font-bold text-emerald-600 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl transition-colors"
                 >
                   {loading ? (
@@ -423,7 +440,7 @@ export default function MarketingPage() {
                   </div>
                   <p className="text-xs text-gray-500">위 수요 신호를 바탕으로 생성한 네이버/인스타 광고 문구 예시에요. 그대로 쓰거나 수정해 집행할 수 있어요.</p>
                 </div>
-                <button onClick={handleAiAnalyze} disabled={loading}
+                <button onClick={handleAnalyzeAdCopies} disabled={loading}
                   className="flex-shrink-0 flex items-center gap-1.5 text-xs font-bold text-emerald-600 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl transition-colors"
                 >
                   {loading ? (
@@ -482,12 +499,19 @@ export default function MarketingPage() {
                   </div>
                   <p className="text-xs text-gray-500">네이버 플레이스·인스타그램 광고에 그대로 적용할 수 있는 타게팅 조건이에요.</p>
                 </div>
-                <button onClick={handleAiAnalyze} disabled={loading}
+                <button onClick={handleAnalyzeTargeting} disabled={loadingTargeting}
                   className="flex-shrink-0 flex items-center gap-1.5 text-xs font-bold text-emerald-600 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl transition-colors"
                 >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
+                  {loadingTargeting ? (
+                    <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  )}
                   AI 분석
                 </button>
               </div>
