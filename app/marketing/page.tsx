@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MOCK_PATIENTS } from "@/lib/mockData";
+import { usePatients } from "@/context/PatientsContext";
 
 function Sidebar({ active }: { active: "dashboard" | "marketing" }) {
   const navItems: { key: string; href: string; label: string; d: string; isNew?: boolean }[] = [
@@ -127,6 +127,7 @@ const DEFAULT_TARGETING: TargetingData = {
 };
 
 export default function MarketingPage() {
+  const { patients } = usePatients();
   const [loading, setLoading] = useState(false);
   const [loadingTargeting, setLoadingTargeting] = useState(false);
   const [adCopies, setAdCopies] = useState<AdCopy[]>(STATIC_AD_COPIES);
@@ -146,10 +147,10 @@ export default function MarketingPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        totalPatients: MOCK_PATIENTS.length,
+        totalPatients: patients.length,
         topBreeds: ["말티즈", "푸들", "골든리트리버", "비숑프리제"].join(", "),
         topTypes: "수술 후 케어, 접종 리마인드, 재내원 안내",
-        pending: MOCK_PATIENTS.filter((p) => p.status === "pending").length,
+        pending: patients.filter((p) => p.status === "pending").length,
       }),
     });
     const data = await res.json();

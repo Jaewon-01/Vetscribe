@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MOCK_PATIENTS, type MockPatient } from "@/lib/mockData";
+import type { MockPatient } from "@/lib/mockData";
 import type { MessageType } from "@/lib/ai/types";
+import { usePatients } from "@/context/PatientsContext";
 
 type TabType = "all" | MessageType | "atRisk";
 
@@ -125,15 +126,14 @@ function Sidebar({ active }: { active: "dashboard" | "marketing" }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [patients, setPatients] = useState(MOCK_PATIENTS);
+  const { patients, updatePatient } = usePatients();
   const [activeTab, setActiveTab] = useState<TabType>("all");
-  const [selectedId, setSelectedId] = useState<string>(MOCK_PATIENTS[0].id);
+  const [selectedId, setSelectedId] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
 
   const toggleStatus = (id: string) => {
-    setPatients((prev) =>
-      prev.map((p) => p.id === id ? { ...p, status: p.status === "pending" ? "sent" : "pending" } : p)
-    );
+    const p = patients.find((x) => x.id === id);
+    if (p) updatePatient(id, { status: p.status === "pending" ? "sent" : "pending" });
   };
 
   const showToast = (msg: string) => {
@@ -141,8 +141,8 @@ export default function DashboardPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const selectedPatient = patients.find((p) => p.id === selectedId) ?? patients[0];
-  const msg = getSampleMessage(selectedPatient);
+  const selectedPatient = patients.find((p) => p.id === selectedId) ?? patients[0] ?? null;
+  const msg = selectedPatient ? getSampleMessage(selectedPatient) : "";
   const byteLen = getByteLength(msg);
 
   const tabs: { key: TabType; label: string }[] = [
@@ -166,6 +166,7 @@ export default function DashboardPage() {
 
   const handleCompose = (p: MockPatient) => {
     const prefill = {
+      patientId: p.id, ownerName: p.ownerName,
       messageType: p.messageType, patientName: p.petName, breed: p.breed, age: p.age,
       vaccineType: p.vaccineType, vaccineDate: p.vaccineDate, reminderDays: p.reminderDays,
       surgeryType: p.surgeryType, medications: p.medications, nextVisit: p.nextVisit,
@@ -356,6 +357,7 @@ export default function DashboardPage() {
           </main>
 
           {/* 우측 미리보기 패널 */}
+          {selectedPatient && (
           <aside className="hidden xl:flex flex-col w-80 flex-shrink-0 border-l border-gray-100 bg-white overflow-y-auto">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
               <h2 className="text-sm font-bold text-gray-900">메시지 미리보기</h2>
@@ -416,6 +418,7 @@ export default function DashboardPage() {
               </button>
             </div>
           </aside>
+          )}
         </div>
       </div>
 

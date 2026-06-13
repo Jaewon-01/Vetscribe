@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AppLayout } from "@/components/AppLayout";
-import { MOCK_PATIENTS } from "@/lib/mockData";
+import { usePatients } from "@/context/PatientsContext";
 import type { MessageType } from "@/lib/ai/types";
 
 type FilterStatus = "전체" | "발송완료" | "검수대기";
@@ -28,13 +28,14 @@ function getStatusBadge(status: string, dDay: number): { text: string; cls: stri
 }
 
 export default function MessagesPage() {
+  const { patients, updatePatient } = usePatients();
   const [filter, setFilter] = useState<FilterStatus>("전체");
 
-  const total   = MOCK_PATIENTS.length;
-  const sent    = MOCK_PATIENTS.filter((p) => p.status === "sent").length;
-  const pending = MOCK_PATIENTS.filter((p) => p.status === "pending").length;
+  const total   = patients.length;
+  const sent    = patients.filter((p) => p.status === "sent").length;
+  const pending = patients.filter((p) => p.status === "pending").length;
 
-  const filtered = MOCK_PATIENTS.filter((p) => {
+  const filtered = patients.filter((p) => {
     if (filter === "발송완료") return p.status === "sent";
     if (filter === "검수대기") return p.status === "pending";
     return true;
@@ -121,9 +122,12 @@ export default function MessagesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${sBadge.cls}`}>
+                        <button
+                          onClick={() => updatePatient(p.id, { status: p.status === "sent" ? "pending" : "sent" })}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${sBadge.cls}`}
+                        >
                           {sBadge.text}
-                        </span>
+                        </button>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <Link
@@ -132,6 +136,8 @@ export default function MessagesPage() {
                             sessionStorage.setItem(
                               "vetscribe_prefill",
                               JSON.stringify({
+                                patientId: p.id,
+                                ownerName: p.ownerName,
                                 messageType: p.messageType,
                                 patientName: p.petName,
                                 breed: p.breed,

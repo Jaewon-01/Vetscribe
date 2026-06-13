@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense, useEffect } from "react";
 import type { PatientInfo, MessageType, Language, Tone } from "@/lib/ai/types";
+import { usePatients } from "@/context/PatientsContext";
 
 const LANGUAGES: { value: Language; label: string; flag: string }[] = [
   { value: "ko", label: "한국어", flag: "🇰🇷" },
@@ -46,9 +47,12 @@ const inputCls = "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 
 function ComposeForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { updatePatient, logMessage } = usePatients();
   const messageType = (searchParams.get("type") ?? "post-surgery") as MessageType;
   const meta = TYPE_META[messageType] ?? TYPE_META["post-surgery"];
 
+  const [patientId, setPatientId] = useState<string>("");
+  const [ownerName, setOwnerName] = useState<string>("");
   const [form, setForm] = useState<Partial<PatientInfo>>({ messageType, patientName: "", breed: "", age: "", language: "ko", tone: "friendly" });
   const [reminderDaysList, setReminderDaysList] = useState<string[]>(["7"]);
   const [customTone, setCustomTone] = useState(() => {
@@ -65,6 +69,8 @@ function ComposeForm() {
         const prefill = JSON.parse(raw);
         setForm((prev) => ({ ...prev, ...prefill }));
         if (prefill.reminderDays) setReminderDaysList([prefill.reminderDays]);
+        if (prefill.patientId) setPatientId(prefill.patientId);
+        if (prefill.ownerName) setOwnerName(prefill.ownerName);
         sessionStorage.removeItem("vetscribe_prefill");
       } catch {}
     }
@@ -95,6 +101,17 @@ function ComposeForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "오류가 발생했습니다.");
+      const preview = (data.message ?? data.messages?.[0]?.message ?? "").slice(0, 80);
+      if (patientId) {
+        await updatePatient(patientId, { status: "sent" });
+        await logMessage({
+          patientId,
+          patientName: form.patientName ?? "",
+          ownerName,
+          messageType,
+          preview,
+        });
+      }
       sessionStorage.setItem("vetscribe_result", JSON.stringify({
         message: data.message ?? null,
         messages: data.messages ?? null,

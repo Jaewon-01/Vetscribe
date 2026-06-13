@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { MOCK_PATIENTS } from "@/lib/mockData";
+import { usePatients } from "@/context/PatientsContext";
 import type { MockPatient } from "@/lib/mockData";
 import type { MessageType } from "@/lib/ai/types";
 
@@ -34,7 +34,7 @@ const EMPTY_FORM: PetForm = {
 };
 
 export default function PetsPage() {
-  const [pets, setPets] = useState<MockPatient[]>(MOCK_PATIENTS);
+  const { patients, addPatient, updatePatient, deletePatient } = usePatients();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -58,10 +58,10 @@ export default function PetsPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.petName.trim() || !form.breed.trim() || !form.ownerName.trim()) return;
     if (editId) {
-      setPets((prev) => prev.map((p) => p.id === editId ? { ...p, ...form } : p));
+      await updatePatient(editId, form);
       showToast("수정됐어요!");
     } else {
       const newPet: MockPatient = {
@@ -70,19 +70,19 @@ export default function PetsPage() {
         dDay: 0,
         status: "pending",
       };
-      setPets((prev) => [newPet, ...prev]);
+      await addPatient(newPet);
       showToast("새 반려동물이 등록됐어요!");
     }
     setShowModal(false);
   };
 
-  const handleDelete = (id: string) => {
-    setPets((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = async (id: string) => {
+    await deletePatient(id);
     setShowModal(false);
     showToast("삭제됐어요.");
   };
 
-  const filtered = pets.filter(
+  const filtered = patients.filter(
     (p) => p.petName.includes(search) || p.breed.toLowerCase().includes(search.toLowerCase())
   );
 

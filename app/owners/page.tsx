@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { MOCK_PATIENTS } from "@/lib/mockData";
+import { usePatients } from "@/context/PatientsContext";
 import type { MockPatient } from "@/lib/mockData";
 import type { MessageType } from "@/lib/ai/types";
 
@@ -52,7 +52,7 @@ function getUniqueOwners(patients: MockPatient[]) {
 }
 
 export default function OwnersPage() {
-  const [patients, setPatients] = useState<MockPatient[]>(MOCK_PATIENTS);
+  const { patients, addPatient, updatePatient, deletePatient } = usePatients();
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<OwnerForm>(EMPTY_FORM);
@@ -75,10 +75,10 @@ export default function OwnersPage() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.ownerName.trim() || !form.petName.trim()) return;
     if (editId) {
-      setPatients((prev) => prev.map((p) => p.id === editId ? { ...p, ...form } : p));
+      await updatePatient(editId, form);
       showToast("보호자 정보가 수정됐어요!");
     } else {
       const newRecord: MockPatient = {
@@ -87,14 +87,14 @@ export default function OwnersPage() {
         dDay: 0,
         status: "pending",
       };
-      setPatients((prev) => [newRecord, ...prev]);
+      await addPatient(newRecord);
       showToast("새 보호자가 등록됐어요!");
     }
     setShowModal(false);
   };
 
-  const handleDelete = (id: string) => {
-    setPatients((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = async (id: string) => {
+    await deletePatient(id);
     setShowModal(false);
     showToast("삭제됐어요.");
   };
