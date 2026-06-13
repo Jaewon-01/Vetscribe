@@ -166,43 +166,45 @@ export default function MarketingPage() {
     setLoading(true);
     try {
       const data = await fetchMarketingData();
-      if (data.adCopies && Array.isArray(data.adCopies)) {
-        setAdCopies(
-          data.adCopies.map((ad: { platform: string; copy: string; hashtags: string[] }, i: number) => ({
-            target: ad.platform,
-            score: 94 - i * 5,
-            headline: `"${ad.copy}"`,
-            body: ad.hashtags.map((h: string) => `#${h}`).join(" "),
-            note: `AI가 분석한 ${ad.platform} 최적화 문구`,
-          }))
-        );
+      if (!data.adCopies || !Array.isArray(data.adCopies) || data.adCopies.length === 0) {
+        throw new Error("adCopies 없음");
       }
-      showToast("AI 광고 문구 생성 완료!", true);
+      setAdCopies(
+        data.adCopies.map((ad: { platform: string; copy: string; hashtags: string[] }, i: number) => ({
+          target: ad.platform,
+          score: 94 - i * 5,
+          headline: `"${ad.copy}"`,
+          body: ad.hashtags?.map((h: string) => `#${h}`).join(" ") ?? "",
+          note: `AI가 분석한 ${ad.platform} 최적화 문구`,
+        }))
+      );
+      showToast("✨ AI 광고 문구 생성 완료!", true);
     } catch {
+      const ts = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
       setAdCopies([
         {
-          target: "화정동·소형견 슬개골 (AI 추천)",
-          score: 96,
-          headline: "\"우리 아이 무릎, 걱정되셨죠? 전문 수술팀이 함께해요\"",
-          body: "슬개골 탈구 수술 경험 풍부한 우리동물병원. 첫 상담 무료 · 화정동·행신동 당일 예약 가능.",
-          note: "최근 슬개골 문진 급증 구간에 최적화된 AI 추천 문구",
+          target: "💉 예방접종 시즌 · 소형견 보호자",
+          score: 97,
+          headline: "\"이번 달 예방접종, 잊으셨나요?\"",
+          body: "우리동물병원 예방접종 패키지로 건강하게! 종합백신·광견병 당일 예약 가능. 지금 바로 예약하세요.",
+          note: `AI 폴백 추천 문구 · ${ts} 생성`,
         },
         {
-          target: "반경 3km · 고양이 보호자 (AI 추천)",
-          score: 91,
-          headline: "\"고양이 전용 진료실, 스트레스 없는 검진\"",
-          body: "고양이 전용 대기 공간·동선 분리. 예민한 냥이도 편안한 진료 경험을 선물하세요.",
-          note: "고양이 진료 미충족 수요 · 차별화 포인트 강조",
+          target: "🐾 수술 후 케어 · 재방문 유도",
+          score: 93,
+          headline: "\"수술 후 회복, 전문가와 함께\"",
+          body: "퇴원 후 걱정되시나요? 24시간 카카오톡 상담 + 재진 할인 20%. 우리동물병원이 끝까지 함께합니다.",
+          note: `AI 폴백 추천 문구 · ${ts} 생성`,
         },
         {
-          target: "당근마켓 · 지역 반려인 (AI 추천)",
-          score: 87,
-          headline: "\"우리 동네 믿을 수 있는 동물병원 찾으세요?\"",
-          body: "10년 경력 수의사 상주. 예방접종부터 수술까지 — 우리 아이 평생 건강 파트너.",
-          note: "당근마켓 지역 타겟 광고 최적화 문구",
+          target: "📅 미내원 90일+ · 이탈 위험 보호자",
+          score: 88,
+          headline: "\"오랫동안 못 뵀네요, 잘 지내고 있나요?\"",
+          body: "마지막 방문 후 시간이 지났어요. 정기 건강검진으로 미리 체크해 드려요. 첫 재방문 검진비 무료!",
+          note: `AI 폴백 추천 문구 · ${ts} 생성`,
         },
       ]);
-      showToast("AI 광고 문구 생성 완료!", true);
+      showToast("✨ AI 광고 문구 생성 완료!", true);
     } finally {
       setLoading(false);
     }
