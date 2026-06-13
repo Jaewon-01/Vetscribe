@@ -109,10 +109,28 @@ const STATIC_AD_COPIES: AdCopy[] = [
   },
 ];
 
+interface TargetingData {
+  regions: { label: string; sub: string }[];
+  keywords: string[];
+  timeslots: string[];
+  budget: { label: string; style: string }[];
+}
+
+const DEFAULT_TARGETING: TargetingData = {
+  regions: [{ label: "화정동", sub: "1순위" }, { label: "행신동", sub: "2순위" }, { label: "반경3km", sub: "" }],
+  keywords: ["소형견 보호자", "슬개골핵심", "반려동물 건강검진", "고양이 집사"],
+  timeslots: ["평일 20-23시", "주말 오전"],
+  budget: [
+    { label: "네이버 플레이스 60%", style: "bg-blue-50 text-blue-700 border border-blue-100" },
+    { label: "인스타그램 40%", style: "bg-pink-50 text-pink-700 border border-pink-100" },
+  ],
+};
+
 export default function MarketingPage() {
   const [aiAnalyzed, setAiAnalyzed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [adCopies, setAdCopies] = useState<AdCopy[]>(STATIC_AD_COPIES);
+  const [targeting, setTargeting] = useState<TargetingData>(DEFAULT_TARGETING);
   const [copied, setCopied] = useState<number | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const today = new Date();
@@ -150,8 +168,22 @@ export default function MarketingPage() {
           }))
         );
       }
+      if (data.plan) {
+        const plan = data.plan as { target: string; channels: string[]; message: string; timing: string };
+        setTargeting({
+          regions: [{ label: "화정동", sub: "1순위" }, { label: "행신동", sub: "2순위" }, { label: plan.target, sub: "AI 추천" }],
+          keywords: [plan.target, plan.message, "반려동물 건강검진", "동물병원 추천"].slice(0, 4),
+          timeslots: plan.timing ? [plan.timing] : ["평일 20-23시", "주말 오전"],
+          budget: plan.channels?.length >= 2
+            ? [
+                { label: `${plan.channels[0]} 60%`, style: "bg-blue-50 text-blue-700 border border-blue-100" },
+                { label: `${plan.channels[1]} 40%`, style: "bg-pink-50 text-pink-700 border border-pink-100" },
+              ]
+            : DEFAULT_TARGETING.budget,
+        });
+      }
       setAiAnalyzed(true);
-      showToast("AI 분석 완료! 광고 문구가 업데이트됐어요.", true);
+      showToast("AI 분석 완료! 광고 문구 및 타게팅 설정이 업데이트됐어요.", true);
     } catch {
       // API 키 미설정 등 실패 시 로컬 폴백으로 분석 결과 표시
       setAdCopies([
@@ -177,8 +209,18 @@ export default function MarketingPage() {
           note: "당근마켓 지역 타겟 광고 최적화 문구",
         },
       ]);
+      setTargeting({
+        regions: [{ label: "화정동", sub: "1순위" }, { label: "행신동", sub: "2순위" }, { label: "반경3km", sub: "AI 추천" }],
+        keywords: ["소형견 슬개골", "고양이 친화 병원", "반려동물 건강검진", "동물병원 당일예약"],
+        timeslots: ["평일 19-22시", "주말 오전 10-12시"],
+        budget: [
+          { label: "네이버 플레이스 55%", style: "bg-blue-50 text-blue-700 border border-blue-100" },
+          { label: "인스타그램 30%", style: "bg-pink-50 text-pink-700 border border-pink-100" },
+          { label: "당근마켓 15%", style: "bg-orange-50 text-orange-700 border border-orange-100" },
+        ],
+      });
       setAiAnalyzed(true);
-      showToast("AI 분석 완료! 맞춤 광고 문구가 업데이트됐어요.", true);
+      showToast("AI 분석 완료! 광고 문구 및 타게팅 설정이 업데이트됐어요.", true);
     } finally {
       setLoading(false);
     }
@@ -459,10 +501,10 @@ export default function MarketingPage() {
                     <span className="font-semibold">지역</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {[{label: "화정동", sub: "1순위"}, {label: "행신동", sub: "2순위"}, {label: "반경3km", sub: ""}].map((c) => (
+                    {targeting.regions.map((c) => (
                       <span key={c.label} className="flex items-center gap-1 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1.5 rounded-xl">
                         <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg>
-                        {c.label}{c.sub && <span className="text-emerald-400 text-[10px]">{c.sub}</span>}
+                        {c.label}{c.sub && <span className="text-emerald-400 text-[10px] ml-0.5">{c.sub}</span>}
                       </span>
                     ))}
                   </div>
@@ -476,7 +518,7 @@ export default function MarketingPage() {
                     <span className="font-semibold">관심사·키워드</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {["소형견 보호자", "슬개골핵심", "반려동물 건강검진", "고양이 집사"].map((kw) => (
+                    {targeting.keywords.map((kw) => (
                       <span key={kw} className="text-xs font-semibold bg-gray-100 text-gray-600 px-3 py-1.5 rounded-xl">{kw}</span>
                     ))}
                   </div>
@@ -490,7 +532,7 @@ export default function MarketingPage() {
                     <span className="font-semibold">노출 시간대</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {["평일 20-23시", "주말 오전"].map((t) => (
+                    {targeting.timeslots.map((t) => (
                       <span key={t} className="text-xs font-semibold bg-gray-100 text-gray-600 px-3 py-1.5 rounded-xl">{t}</span>
                     ))}
                   </div>
@@ -504,8 +546,9 @@ export default function MarketingPage() {
                     <span className="font-semibold">추천 예산 배분</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-xl">네이버 플레이스 60%</span>
-                    <span className="text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-100 px-3 py-1.5 rounded-xl">인스타그램 40%</span>
+                    {targeting.budget.map((b) => (
+                      <span key={b.label} className={`text-xs font-semibold px-3 py-1.5 rounded-xl ${b.style}`}>{b.label}</span>
+                    ))}
                   </div>
                 </div>
               </div>
