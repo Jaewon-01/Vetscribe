@@ -112,15 +112,20 @@ const STATIC_AD_COPIES: AdCopy[] = [
 export default function MarketingPage() {
   const [aiAnalyzed, setAiAnalyzed] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [adCopies, setAdCopies] = useState<AdCopy[]>(STATIC_AD_COPIES);
   const [copied, setCopied] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const today = new Date();
   const dateLabel = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, "0")} · 최근 90일 데이터`;
 
+  const showToast = (msg: string, ok = true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const handleAiAnalyze = async () => {
+    if (loading) return;
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch("/api/marketing", {
         method: "POST",
@@ -133,6 +138,7 @@ export default function MarketingPage() {
         }),
       });
       const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "분석 실패");
       if (data.adCopies && Array.isArray(data.adCopies)) {
         setAdCopies(
           data.adCopies.map((ad: { platform: string; copy: string; hashtags: string[] }, i: number) => ({
@@ -145,9 +151,10 @@ export default function MarketingPage() {
         );
       }
       setAiAnalyzed(true);
+      showToast("AI 분석 완료! 광고 문구가 업데이트됐어요.", true);
     } catch {
-      // API 실패 시 정적 데이터 유지
       setAiAnalyzed(true);
+      showToast("AI 서버 오류 — 기본 데이터로 표시합니다.", false);
     } finally {
       setLoading(false);
     }
@@ -161,6 +168,20 @@ export default function MarketingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {toast && (
+        <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2 ${toast.ok ? "bg-slate-900" : "bg-red-600"}`}>
+          {toast.ok ? (
+            <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01M12 4a8 8 0 100 16 8 8 0 000-16z" />
+            </svg>
+          )}
+          {toast.msg}
+        </div>
+      )}
       <Sidebar active="marketing" />
 
       <div className="flex-1 lg:ml-56 flex flex-col min-h-screen">
