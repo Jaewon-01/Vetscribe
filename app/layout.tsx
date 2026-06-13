@@ -5,7 +5,7 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "VetScribe — 보호자 커뮤니케이션 자동화",
+  title: "Pawly — 보호자 커뮤니케이션 자동화",
   description: "한국 동물병원 수의사를 위한 AI 안내문 자동 생성 서비스",
 };
 
