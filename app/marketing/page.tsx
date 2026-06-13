@@ -331,7 +331,7 @@ export default function MarketingPage() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="px-6 py-6 max-w-4xl space-y-6 pb-24 lg:pb-8">
+          <div className="px-6 py-6 max-w-4xl mx-auto space-y-6 pb-24 lg:pb-8">
 
             {/* 타이틀 */}
             <div className="flex items-start justify-between gap-4">
