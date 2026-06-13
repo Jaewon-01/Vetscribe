@@ -68,13 +68,13 @@ function getByteLength(str: string) {
 function Sidebar({ active }: { active: "dashboard" | "marketing" }) {
   const navItems: { key: string; href: string; label: string; d: string; isNew?: boolean }[] = [
     { key: "dashboard", href: "/", label: "오늘의 케어 메시지", d: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-    { key: "messages",  href: "#",          label: "메시지 관리",       d: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" },
-    { key: "pets",      href: "#",          label: "반려동물",          d: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" },
-    { key: "owners",    href: "#",          label: "보호자",            d: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-    { key: "templates", href: "#",          label: "템플릿",            d: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
-    { key: "insight",   href: "#",          label: "케어 인사이트",      d: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
+    { key: "messages",  href: "/messages",          label: "메시지 관리",       d: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" },
+    { key: "pets",      href: "/pets",          label: "반려동물",          d: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" },
+    { key: "owners",    href: "/owners",          label: "보호자",            d: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { key: "templates", href: "/templates",          label: "템플릿",            d: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
+    { key: "insight",   href: "/insight",          label: "케어 인사이트",      d: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
     { key: "marketing", href: "/marketing", label: "마케팅 인사이트",    d: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6", isNew: true },
-    { key: "auto",      href: "#",          label: "자동화 규칙",        d: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" },
+    { key: "auto",      href: "/automation",          label: "자동화 규칙",        d: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" },
   ];
 
   return (
@@ -125,9 +125,21 @@ function Sidebar({ active }: { active: "dashboard" | "marketing" }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [patients] = useState(MOCK_PATIENTS);
+  const [patients, setPatients] = useState(MOCK_PATIENTS);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [selectedId, setSelectedId] = useState<string>(MOCK_PATIENTS[0].id);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const toggleStatus = (id: string) => {
+    setPatients((prev) =>
+      prev.map((p) => p.id === id ? { ...p, status: p.status === "pending" ? "sent" : "pending" } : p)
+    );
+  };
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const selectedPatient = patients.find((p) => p.id === selectedId) ?? patients[0];
   const msg = getSampleMessage(selectedPatient);
@@ -165,6 +177,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {toast && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2">
+          <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+          {toast}
+        </div>
+      )}
       <Sidebar active="dashboard" />
 
       <div className="flex-1 lg:ml-56 flex flex-col min-h-screen">
@@ -315,7 +335,12 @@ export default function DashboardPage() {
                         {dateStr && <p className="text-xs text-gray-500">{dateStr}</p>}
                       </div>
                       <span className={`text-xs font-bold px-2.5 py-1 rounded-lg flex-shrink-0 ${dday.cls}`}>{dday.label}</span>
-                      <span className={`text-xs font-bold px-3 py-1.5 rounded-xl flex-shrink-0 ${status.cls}`}>{status.label}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleStatus(p.id); }}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-xl flex-shrink-0 transition-colors ${status.cls}`}
+                      >
+                        {status.label}
+                      </button>
                       <button onClick={(e) => { e.stopPropagation(); handleCompose(p); }}
                         className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                       >
@@ -386,7 +411,7 @@ export default function DashboardPage() {
               >
                 수정하기
               </button>
-              <button className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors">
+              <button onClick={() => showToast(`${selectedPatient.ownerName} 보호자님께 메시지가 예약되었습니다`)} className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors">
                 발송 예약
               </button>
             </div>
