@@ -38,20 +38,64 @@ const INITIAL_RULES = [
   },
 ];
 
+const ICONS = ["💉", "🐾", "📅", "⚠️", "🔔", "🏥", "💊", "📋"];
+const TRIGGER_OPTIONS = [
+  "예방접종 D-7 전",
+  "예방접종 D-1 전",
+  "수술 당일 퇴원 후",
+  "수술 D+1",
+  "재내원 D-3 전",
+  "재내원 D-1 전",
+  "마지막 내원 후 30일",
+  "마지막 내원 후 90일",
+];
+
 export default function AutomationPage() {
   const [rules, setRules] = useState(INITIAL_RULES);
   const [toast, setToast] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newTrigger, setNewTrigger] = useState(TRIGGER_OPTIONS[0]);
+  const [newIcon, setNewIcon] = useState("🔔");
+
+  const showToastMsg = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const toggle = (id: number) => {
     setRules((prev) =>
       prev.map((r) => {
         if (r.id !== id) return r;
         const next = { ...r, enabled: !r.enabled };
-        setToast(next.enabled ? `"${r.title}" 활성화됨` : `"${r.title}" 비활성화됨`);
-        setTimeout(() => setToast(null), 3000);
+        showToastMsg(next.enabled ? `"${r.title}" 활성화됨` : `"${r.title}" 비활성화됨`);
         return next;
       })
     );
+  };
+
+  const addRule = () => {
+    if (!newTitle.trim()) return;
+    const id = rules.length + 1;
+    setRules((prev) => [
+      ...prev,
+      {
+        id,
+        enabled: true,
+        title: newTitle.trim(),
+        desc: newDesc.trim() || newTrigger,
+        detail: `${newTrigger} 조건 충족 시 자동으로 메시지를 발송합니다.`,
+        lastRun: "방금 추가됨",
+        icon: newIcon,
+      },
+    ]);
+    setNewTitle("");
+    setNewDesc("");
+    setNewTrigger(TRIGGER_OPTIONS[0]);
+    setNewIcon("🔔");
+    setShowModal(false);
+    showToastMsg("새 규칙이 추가됐어요!");
   };
 
   return (
@@ -64,10 +108,81 @@ export default function AutomationPage() {
           {toast}
         </div>
       )}
+
+      {/* 새 규칙 추가 모달 */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-black text-gray-900 text-lg mb-5">새 자동화 규칙 추가</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block">규칙 이름 *</label>
+                <input
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  placeholder="예: 수술 후 D-3 케어 메시지"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block">발송 조건</label>
+                <select
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  value={newTrigger}
+                  onChange={(e) => setNewTrigger(e.target.value)}
+                >
+                  {TRIGGER_OPTIONS.map((o) => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block">설명 (선택)</label>
+                <input
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  placeholder="추가 설명을 입력하세요"
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-1.5 block">아이콘</label>
+                <div className="flex flex-wrap gap-2">
+                  {ICONS.map((ic) => (
+                    <button
+                      key={ic}
+                      onClick={() => setNewIcon(ic)}
+                      className={`w-9 h-9 rounded-xl text-xl flex items-center justify-center transition-colors ${newIcon === ic ? "bg-emerald-100 ring-2 ring-emerald-400" : "bg-gray-100 hover:bg-gray-200"}`}
+                    >
+                      {ic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                취소
+              </button>
+              <button
+                onClick={addRule}
+                disabled={!newTitle.trim()}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold disabled:opacity-40 transition-colors"
+              >
+                규칙 추가
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="px-6 py-6 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-gray-500">조건이 충족되면 자동으로 케어 메시지를 발송합니다.</p>
-          <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-colors">
+          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-colors">
             <span>+</span> 새 규칙 추가
           </button>
         </div>
