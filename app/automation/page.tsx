@@ -65,14 +65,11 @@ export default function AutomationPage() {
   };
 
   const toggle = (id: number) => {
-    setRules((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const next = { ...r, enabled: !r.enabled };
-        showToastMsg(next.enabled ? `"${r.title}" 활성화됨` : `"${r.title}" 비활성화됨`);
-        return next;
-      })
-    );
+    const rule = rules.find((r) => r.id === id);
+    if (!rule) return;
+    const nextEnabled = !rule.enabled;
+    setRules((prev) => prev.map((r) => r.id === id ? { ...r, enabled: nextEnabled } : r));
+    showToastMsg(nextEnabled ? `"${rule.title}" 활성화됨` : `"${rule.title}" 비활성화됨`);
   };
 
   const addRule = () => {

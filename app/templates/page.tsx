@@ -182,8 +182,8 @@ export default function TemplatesPage() {
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {templates.map((t) => (
-            <div key={t.type} className={`bg-white border ${t.border} rounded-2xl p-6 shadow-sm hover:shadow-md transition-all`}>
+          {templates.map((t, i) => (
+            <div key={`${t.type}-${i}`} className={`bg-white border ${t.border} rounded-2xl p-6 shadow-sm hover:shadow-md transition-all`}>
               <div className={`w-12 h-12 rounded-2xl ${t.bg} flex items-center justify-center text-2xl mb-4`}>{t.icon}</div>
               <h2 className="font-bold text-gray-900 mb-1">{t.title}</h2>
               <p className="text-xs text-gray-500 mb-4 leading-relaxed">{t.desc}</p>
