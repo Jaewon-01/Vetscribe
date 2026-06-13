@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { MOCK_PATIENTS } from "@/lib/mockData";
 
 function Sidebar({ active }: { active: "dashboard" | "marketing" }) {
   const navItems: { key: string; href: string; label: string; d: string; isNew?: boolean }[] = [
