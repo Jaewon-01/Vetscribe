@@ -357,68 +357,92 @@ export default function DashboardPage() {
           </main>
 
           {/* 우측 미리보기 패널 */}
-          {selectedPatient && (
-          <aside className="hidden xl:flex flex-col w-80 flex-shrink-0 border-l border-gray-100 bg-white overflow-y-auto">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-              <h2 className="text-sm font-bold text-gray-900">메시지 미리보기</h2>
-              <button className="text-gray-400 hover:text-gray-600">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 px-5 py-4 space-y-4">
-              <div className="flex flex-wrap gap-1.5">
-                <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-1 rounded-full">원진 진료 차트·우리엔 PMS</span>
-                <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full">✨ AI가 보호자용 메시지로 자동 변환</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${TYPE_META[selectedPatient.messageType].bg}`}>
-                  {TYPE_META[selectedPatient.messageType].icon}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-800">To. {selectedPatient.ownerName} 보호자</p>
-                  <p className="text-xs text-gray-400">{selectedPatient.petName} ({selectedPatient.breed}·{selectedPatient.age}세)</p>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-2xl p-4 text-xs text-gray-800 whitespace-pre-wrap leading-relaxed border border-gray-100">
-                {msg}
-              </div>
-              <p className="text-[10px] text-gray-400">문자 길이: {byteLen} / 1,000 byte · 긴 안내문도 자동 분할 발송</p>
-              <div className="border border-gray-100 rounded-2xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-1.5">
-                    <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <span className="text-xs font-bold text-gray-800">Safety Check</span>
+          <aside className="hidden xl:flex flex-col w-[420px] flex-shrink-0 border-l border-gray-100 bg-white overflow-y-auto">
+            {selectedPatient ? (
+              <>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-900">메시지 미리보기</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">환자를 선택하면 예상 메시지를 확인할 수 있어요</p>
                   </div>
-                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">검수 통과</span>
+                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full">✨ AI 생성</span>
                 </div>
-                <div className="space-y-2">
-                  {SAFETY_CHECKS.map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-xs text-gray-600">
-                      <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                      {item}
+                <div className="flex-1 px-6 py-5 space-y-5">
+                  <div className="flex items-center gap-3 bg-gray-50 rounded-2xl px-4 py-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${TYPE_META[selectedPatient.messageType].bg}`}>
+                      {TYPE_META[selectedPatient.messageType].icon}
                     </div>
-                  ))}
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">To. {selectedPatient.ownerName} 보호자</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{selectedPatient.petName} · {selectedPatient.breed} · {selectedPatient.age}세</p>
+                    </div>
+                    <div className="ml-auto flex-shrink-0">
+                      <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${TYPE_META[selectedPatient.messageType].bg} ${TYPE_META[selectedPatient.messageType].color}`}>
+                        {TYPE_META[selectedPatient.messageType].label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-gray-500">메시지 내용</span>
+                      <span className="text-[10px] text-gray-400">{byteLen} / 1,000 byte</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-2xl p-4 text-xs text-gray-800 whitespace-pre-wrap leading-relaxed border border-gray-100 min-h-[200px]">
+                      {msg}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1.5">긴 안내문도 자동 분할 발송</p>
+                  </div>
+
+                  <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span className="text-xs font-bold text-gray-800">Safety Check</span>
+                      </div>
+                      <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full">검수 통과</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {SAFETY_CHECKS.map((item) => (
+                        <div key={item} className="flex items-center gap-1.5 text-xs text-gray-600">
+                          <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 text-xs text-blue-700">
+                    <span className="font-semibold">원진 진료 차트 · 우리엔 PMS</span> 데이터를 기반으로 AI가 보호자 맞춤 메시지를 자동 생성했어요.
+                  </div>
+                </div>
+                <div className="flex gap-2 px-6 py-4 border-t border-gray-100 flex-shrink-0">
+                  <button onClick={() => handleCompose(selectedPatient)}
+                    className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    수정하기
+                  </button>
+                  <button onClick={() => showToast(`${selectedPatient.ownerName} 보호자님께 메시지가 예약되었습니다`)}
+                    className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors"
+                  >
+                    발송 예약
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center text-3xl">🐾</div>
+                <div>
+                  <p className="text-sm font-bold text-gray-700">환자를 선택해 주세요</p>
+                  <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">왼쪽 목록에서 환자를 클릭하면<br />메시지 미리보기가 표시돼요</p>
                 </div>
               </div>
-            </div>
-            <div className="flex gap-2 px-5 py-4 border-t border-gray-100 flex-shrink-0">
-              <button onClick={() => handleCompose(selectedPatient)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                수정하기
-              </button>
-              <button onClick={() => showToast(`${selectedPatient.ownerName} 보호자님께 메시지가 예약되었습니다`)} className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-colors">
-                발송 예약
-              </button>
-            </div>
+            )}
           </aside>
-          )}
         </div>
       </div>
 
