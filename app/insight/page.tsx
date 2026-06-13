@@ -1,7 +1,8 @@
 "use client";
 
 import { AppLayout } from "@/components/AppLayout";
-import { MOCK_PATIENTS } from "@/lib/mockData";
+import { usePatients } from "@/context/PatientsContext";
+import type { MessageType } from "@/lib/ai/types";
 
 const MONTHLY = [
   { month: "1월", count: 18 }, { month: "2월", count: 22 },
@@ -10,17 +11,42 @@ const MONTHLY = [
 ];
 const maxMonthly = Math.max(...MONTHLY.map((m) => m.count));
 
-const TYPE_DIST = [
-  { label: "예방접종", pct: 35, color: "bg-emerald-400" },
-  { label: "수술 후 케어", pct: 28, color: "bg-violet-400" },
-  { label: "재내원 안내", pct: 22, color: "bg-amber-400" },
-  { label: "수술 전 케어", pct: 15, color: "bg-blue-400" },
-];
+const TYPE_COLORS: Record<MessageType, string> = {
+  vaccination:    "bg-emerald-400",
+  "post-surgery": "bg-violet-400",
+  revisit:        "bg-amber-400",
+  "pre-surgery":  "bg-blue-400",
+};
+const TYPE_LABELS: Record<MessageType, string> = {
+  vaccination:    "예방접종",
+  "post-surgery": "수술 후 케어",
+  revisit:        "재내원 안내",
+  "pre-surgery":  "수술 전 케어",
+};
 
 export default function InsightPage() {
-  const sent = MOCK_PATIENTS.filter((p) => p.status === "sent").length;
-  const pending = MOCK_PATIENTS.filter((p) => p.status === "pending").length;
-  const total = MOCK_PATIENTS.length;
+  const { patients, messages } = usePatients();
+
+  const sent    = patients.filter((p) => p.status === "sent").length;
+  const pending = patients.filter((p) => p.status === "pending").length;
+  const total   = patients.length;
+
+  const typeCounts: Record<string, number> = {};
+  for (const p of patients) {
+    typeCounts[p.messageType] = (typeCounts[p.messageType] ?? 0) + 1;
+  }
+  const typeTotal = total || 1;
+  const TYPE_DIST = (["vaccination", "post-surgery", "revisit", "pre-surgery"] as MessageType[]).map((t) => ({
+    label: TYPE_LABELS[t],
+    pct: Math.round(((typeCounts[t] ?? 0) / typeTotal) * 100),
+    color: TYPE_COLORS[t],
+  }));
+
+  const thisMonthSent = messages.filter((m) => {
+    const d = new Date(m.sentAt);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length + sent;
 
   return (
     <AppLayout active="insight" title="케어 인사이트">
@@ -30,7 +56,7 @@ export default function InsightPage() {
         {/* 통계 카드 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "이번 달 발송 완료", value: "23건", sub: "+3 전월 대비", subColor: "text-emerald-600", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", ic: "text-emerald-400" },
+            { label: "이번 달 발송 완료", value: `${thisMonthSent}건`, sub: "발송 완료 기준", subColor: "text-emerald-600", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", ic: "text-emerald-400" },
             { label: "보호자 응답률", value: "78%", sub: "목표 80%", subColor: "text-blue-500", icon: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z", ic: "text-blue-400" },
             { label: "재방문 전환율", value: "45%", sub: "+5% 전월 대비", subColor: "text-violet-500", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6", ic: "text-violet-400" },
             { label: "평균 발송 소요", value: "3.2분", sub: "AI 자동 생성", subColor: "text-orange-500", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", ic: "text-orange-400" },
