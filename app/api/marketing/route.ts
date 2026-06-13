@@ -46,6 +46,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(parsed);
   } catch (err) {
     console.error("Marketing insight error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    const isQuota = msg.includes("429") || msg.includes("quota") || msg.includes("Too Many Requests");
+    if (isQuota) {
+      return NextResponse.json({ error: "AI 무료 할당량이 초과됐어요. 내일 다시 시도해 주세요." }, { status: 429 });
+    }
     return NextResponse.json({ error: "마케팅 인사이트 생성 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
